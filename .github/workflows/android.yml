@@ -1,27 +1,54 @@
-name: Android CI
+name: Android CI and Release
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v5
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-    - name: Build with Gradle
-      run: gradle assembleDebug
+      - name: Create Temporary Keystore
+        run: |
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Build with Gradle
+        run: gradle assembleDebug
+
+      - name: Rename APK File
+        run: |
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Recall-Me-Please.apk
+
+      - name: Create or Update 'latest' GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "app/build/outputs/apk/debug/Recall-Me-Please.apk"
+          tag: "latest"
+          name: "Recall Me Please – Latest Release APK"
+          body: |
+            ## 📱 Recall Me Please - Android Release
+
+            Download the official APK for **Recall Me Please**.
+
+            ---
+            * **File Name:** `Recall-Me-Please.apk`
+            * **Build Status:** Updated automatically on every commit to `main`.
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
