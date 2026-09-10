@@ -1,0 +1,6 @@
+{
+  "name": "Recall Me Please",
+  "description": "Personal AI memory assistant with continuous listening, automatic memory detection, and voice command capture.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
